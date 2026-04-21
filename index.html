@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -62,12 +62,22 @@ kbd{background:var(--surface);border:1px solid var(--border);padding:.1rem .4rem
   color:var(--accent3);border:1px solid var(--border);padding:.3rem .9rem;
   background:rgba(5,5,8,.85);backdrop-filter:blur(8px);white-space:nowrap;}
 
+/* Status indicator for inverted controls */
+#status-bar{position:absolute;bottom:1.5rem;left:50%;transform:translateX(-50%);
+  display:flex;gap:.8rem;pointer-events:none;}
+.status-pill{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;
+  padding:.3rem .8rem;border:1px solid;opacity:0;transition:opacity .3s;white-space:nowrap;}
+.status-pill.active{opacity:1;}
+#pill-inv{border-color:var(--accent2);color:var(--accent2);background:rgba(255,101,132,.08);}
+#pill-tele{border-color:#b57bee;color:#b57bee;background:rgba(181,123,238,.08);}
+
 /* Death */
 #death-screen{background:rgba(5,5,8,.88);backdrop-filter:blur(10px);}
 .death-title{font-family:'Syne',sans-serif;font-size:clamp(2.5rem,8vw,5.5rem);font-weight:800;color:var(--danger);letter-spacing:-.03em;margin-bottom:.3rem;}
 .shake{animation:shk .4s ease;}
 @keyframes shk{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px)};}
-.death-quote{font-size:.8rem;color:var(--muted);font-style:italic;margin-bottom:2.5rem;text-align:center;max-width:380px;}
+.death-quote{font-size:.8rem;color:var(--muted);font-style:italic;margin-bottom:.6rem;text-align:center;max-width:420px;line-height:1.7;}
+.meme-box{font-size:1.6rem;margin-bottom:1.6rem;text-align:center;line-height:1.4;max-width:380px;}
 .dstats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);margin-bottom:2.5rem;width:320px;}
 .dstat{background:var(--bg2);padding:1rem;text-align:center;}
 .dstat-val{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--accent);}
@@ -83,7 +93,7 @@ kbd{background:var(--surface);border:1px solid var(--border);padding:.1rem .4rem
   font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;letter-spacing:.05em;
   padding:.6rem 1.4rem;background:var(--danger);color:#fff;
   clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));
-  opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;}
+  opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;text-align:center;max-width:90vw;}
 #toast.show{opacity:1;}
 
 /* Scanlines */
@@ -91,6 +101,23 @@ kbd{background:var(--surface);border:1px solid var(--border);padding:.1rem .4rem
   background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.055) 2px,rgba(0,0,0,.055) 4px);}
 
 #game-canvas{position:fixed;inset:0;z-index:1;display:block;}
+
+/* Teleporter choice overlay */
+#tele-overlay{position:fixed;inset:0;z-index:55;background:rgba(5,5,8,.82);backdrop-filter:blur(6px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;
+  opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s,visibility .2s;}
+#tele-overlay.show{opacity:1;visibility:visible;pointer-events:all;}
+.tele-title{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:#b57bee;letter-spacing:.05em;}
+.tele-sub{font-size:.7rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;}
+.tele-choices{display:flex;gap:1.2rem;margin-top:.4rem;}
+.tele-btn{
+  width:110px;height:110px;background:transparent;border:2px solid #b57bee;
+  color:#b57bee;font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;
+  cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;
+  clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));
+}
+.tele-btn:hover{background:rgba(181,123,238,.18);box-shadow:0 0 24px rgba(181,123,238,.4);}
+.tele-btn .tele-icon{font-size:2rem;}
 </style>
 </head>
 <body>
@@ -120,21 +147,33 @@ kbd{background:var(--surface);border:1px solid var(--border);padding:.1rem .4rem
     </div>
   </div>
   <div class="lvl-badge" id="lvl-badge">LEVEL 1</div>
+  <div id="status-bar">
+    <div class="status-pill" id="pill-inv">⟲ CONTROLS INVERTED</div>
+    <div class="status-pill" id="pill-tele">⬡ TELEPORTER ACTIVE</div>
+  </div>
 </div>
 
 <div id="toast"></div>
 
+<!-- TELEPORTER CHOICE OVERLAY -->
+<div id="tele-overlay">
+  <div class="tele-title">⬡ TELEPORTER</div>
+  <div class="tele-sub">Choose your fate — wisely</div>
+  <div class="tele-choices" id="tele-choices"></div>
+</div>
+
 <!-- TITLE -->
 <div class="screen" id="title-screen">
   <div class="game-logo"><span class="logo-void">VOID</span><br><span class="logo-run">RUN</span></div>
-  <div class="tagline"> developed by anjali balaji tilve & yashrajbhatt</div>
+  <div class="tagline">developed by aismbf & yashrajbhatt</div>
   <ul class="menu-list">
     <li><button class="menu-btn primary" id="btn-start"><span>▶ Start Game</span></button></li>
     <li><button class="menu-btn" id="btn-ctrl"><span>⌨ Controls</span></button></li>
   </ul>
   <div class="controls-hint">
     <kbd>A</kbd> <kbd>D</kbd> or <kbd>←</kbd> <kbd>→</kbd> Move &nbsp;|&nbsp; <kbd>W</kbd> <kbd>Space</kbd> <kbd>↑</kbd> Jump<br>
-    Double jump in air &nbsp;|&nbsp; <kbd>S</kbd> Fast fall &nbsp;|&nbsp; <kbd>R</kbd> Restart
+    Double jump in air &nbsp;|&nbsp; <kbd>S</kbd> Fast fall &nbsp;|&nbsp; <kbd>R</kbd> Restart<br>
+    <span style="color:#b57bee">⬡ Teleporters</span>: choose correct one to advance!
   </div>
 </div>
 
@@ -142,6 +181,7 @@ kbd{background:var(--surface);border:1px solid var(--border);padding:.1rem .4rem
 <div class="screen hidden" id="death-screen">
   <div class="death-title" id="death-title">YOU DIED</div>
   <div class="death-quote" id="death-quote">"Git gud."</div>
+  <div class="meme-box" id="meme-box"></div>
   <div class="dstats">
     <div class="dstat"><div class="dstat-val" id="ds-d">0</div><div class="dstat-lbl">Deaths</div></div>
     <div class="dstat"><div class="dstat-val" id="ds-t">0s</div><div class="dstat-lbl">Time</div></div>
@@ -170,7 +210,7 @@ kbd{background:var(--surface);border:1px solid var(--border);padding:.1rem .4rem
 
 <script>
 // ════════════════════════════════════
-//  BG PARTICLES  (own canvas + ctx)
+//  BG PARTICLES
 // ════════════════════════════════════
 (function(){
   const c  = document.getElementById('bg-canvas');
@@ -211,19 +251,64 @@ const ctx    = canvas.getContext('2d');
 const GW=1000, GH=600;
 const GRAVITY=0.52, JUMP_F=-12.5, SPD=5.2, COYOTE=8, JBUF=8;
 
-const QUOTES = [
-  '"Git gud."','"Pain is temporary. Quitting is forever."','"Skill issue."',
-  '"You died... again."','"Almost! (not really)"','"Touch grass."',
-  '"Maybe try a different game?"','"The platform was RIGHT THERE."',
-  '"Incredible. Incredibly bad."','"One more try!"','"Stay calm... lol."',
+// ── DEATH ROASTS / MEMES ──
+const ROAST_QUOTES = [
+  '"Git gud."',
+  '"Bhai, itna bhi nahi kar sakte? 😂"',
+  '"Pain is temporary. Quitting is forever."',
+  '"Skill issue. Certified."',
+  '"You died... again. Shocking."',
+  '"Almost! (not really)"',
+  '"Touch grass. Seriously."',
+  '"Maybe try Candy Crush instead?"',
+  '"The platform was RIGHT THERE bro."',
+  '"Incredible. Incredibly bad."',
+  '"Ek aur baar. Phir ek aur. Phir ek aur."',
+  '"Yeh toh seedha embarrassing hai."',
+  '"Beta, tumse na ho payega."',
+  '"My dadi can do better. She\'s 80."',
+  '"404: Skill Not Found."',
+  '"Tumhara future dark hai... like this game."',
+  '"Itna hua toh ab poori raat kheloge kya?"',
+  '"This is not it chief."',
+  '"You have the reflexes of a sleeping cat."',
+  '"Ek number bewakoof ho tum. Lovingly."',
 ];
+
+const MEMES = [
+  '😭💀\n"Main toh gaya"',
+  '🤡\n"This is fine."',
+  '🗿\n"Mujhe kuch nahi pata tha."',
+  '👀\n"Nobody saw that."',
+  '😤\n"Paanch minute aur."',
+  '🫠\n"Bhai mujhe chhod do."',
+  '💀🇮🇳\n"Jai ho... nahi."',
+  '🤦\n"Yaar kya kar raha hai tu?"',
+  '📉\n"Performance Review: F"',
+  '🧠💨\n"Brain left the chat."',
+  '😂🤝\n"It be like that sometimes."',
+  '🥲\n"Almost... said no one."',
+  '🌚\n"Andha hai kya?"',
+  '😩\n"AGAIN?! REALLY?!"',
+  '🏆\n"Worst Player Award 2025"',
+  '👁️👄👁️\n"I watched that happen."',
+  '🪦\nR.I.P. Your dignity.',
+  '💀\n"He was so close... lol no."',
+  '🦆\n"Quack. That means you failed."',
+  '🇮🇳🎺\n"Aye haaye!"',
+];
+
 const RAGE_LBL = ['calm','focused','tilted','RAGING','AAAAARGH!!'];
 
 // ── state ──
-let gstate = 'menu'; // menu | playing | dying | transition | win
+let gstate = 'menu';
 let deaths=0, jumps=0, t0=0, best=null;
 let lvIdx=0;
 let parts=[], shake=0, jbuf=0;
+
+// ── inverted controls state ──
+let invertedTimer=0; // frames remaining
+const INVERT_DURATION=300; // 5 seconds at 60fps
 
 // ── input ──
 const K = {};
@@ -249,8 +334,12 @@ function resetP(spawn){
 }
 
 // ════════════════════════════════════
-//  LEVELS
+//  LEVELS  (extended with new obstacles)
 // ════════════════════════════════════
+// Teleporter format: {x, y, r, id, dest:'safe'|'spike'|'start'}
+// Invisible platform: {x,y,w,h,t:'invis', visTimer:0, hiddenFor:120, shownFor:90}
+// Shift platform: {x,y,w,h,t:'shift', dx:?, minX:?, maxX:?} — shifts forward/backward slowly
+
 const LVS=[
 {
   name:'LEVEL 1 — AWAKENING', bg:['#050508','#0d0d1a'],
@@ -262,13 +351,31 @@ const LVS=[
     {x:580,y:400,w:80, h:18,t:'solid'},
     {x:710,y:450,w:100,h:18,t:'crumble'},
     {x:870,y:410,w:130,h:18,t:'solid'},
+    // invisible platforms (help/trap)
+    {x:350,y:460,w:60,h:14,t:'invis',visTimer:0,hiddenFor:130,shownFor:80,_phase:40},
+    // shifting platform
+    {x:470,y:350,w:70,h:14,t:'shift',dx:1.2,minX:420,maxX:560},
   ],
   moving:[
     {x:550,y:345,w:80,h:14,dx:1.4,dy:0,x0:550,y0:345,minX:510,maxX:640,minY:345,maxY:345},
   ],
-  spikes:[{x:200,y:500,w:40,h:14},{x:470,y:430,w:20,h:14},{x:620,y:390,w:20,h:14}],
+  // spikes: some on top, some inverted (ceiling spikes — orientation flag)
+  spikes:[
+    {x:200,y:500,w:40,h:14,inv:false},
+    {x:470,y:430,w:20,h:14,inv:false},
+    {x:620,y:390,w:20,h:14,inv:false},
+    {x:300,y:466,w:30,h:12,inv:false}, // gap spikes under invisible platform zone
+  ],
+  teleporters:[
+    // Three portals appear at x≈750, player must step in; one is safe, two are traps
+    {x:750,y:430,r:18,id:'A',dest:'safe'},
+    {x:800,y:430,r:18,id:'B',dest:'spike'},
+    {x:695,y:430,r:18,id:'C',dest:'start'},
+  ],
   coins:[{x:300,y:455},{x:460,y:415},{x:600,y:375},{x:740,y:425},{x:900,y:385}],
   goal:{x:935,y:382}, killY:590,
+  // inverted zones: x ranges where controls are flipped
+  invertZones:[{x1:450,x2:650}],
 },
 {
   name:'LEVEL 2 — VOID CROSSING', bg:['#060510','#120820'],
@@ -282,6 +389,11 @@ const LVS=[
     {x:700,y:360,w:70, h:18,t:'ice'},
     {x:840,y:320,w:80, h:18,t:'solid'},
     {x:960,y:285,w:40, h:18,t:'solid'},
+    // invisible platforms
+    {x:130,y:450,w:50,h:14,t:'invis',visTimer:0,hiddenFor:100,shownFor:70,_phase:0},
+    {x:640,y:330,w:55,h:14,t:'invis',visTimer:0,hiddenFor:90,shownFor:60,_phase:55},
+    // shifting platform in the gap
+    {x:380,y:270,w:65,h:14,t:'shift',dx:1.5,minX:330,maxX:500},
   ],
   moving:[
     {x:250,y:295,w:70,h:14,dx:0,  dy:1.8, x0:250,y0:295,minX:250,maxX:250,minY:255,maxY:330},
@@ -289,12 +401,23 @@ const LVS=[
     {x:730,y:245,w:60,h:14,dx:0,  dy:2.0, x0:730,y0:245,minX:730,maxX:730,minY:200,maxY:290},
   ],
   spikes:[
-    {x:120,y:460,w:60,h:14},{x:260,y:420,w:50,h:14},
-    {x:380,y:380,w:70,h:14},{x:625,y:300,w:40,h:14},
-    {x:775,y:350,w:65,h:14},{x:905,y:310,w:55,h:14},
+    {x:120,y:460,w:60,h:14,inv:false},
+    {x:260,y:420,w:50,h:14,inv:false},
+    {x:380,y:380,w:70,h:14,inv:false},
+    {x:625,y:300,w:40,h:14,inv:false},
+    {x:775,y:350,w:65,h:14,inv:false},
+    {x:905,y:310,w:55,h:14,inv:false},
+    // ceiling spike (inverted) — hanging from ceiling area
+    {x:500,y:190,w:50,h:14,inv:true},
+  ],
+  teleporters:[
+    {x:290,y:370,r:18,id:'A',dest:'spike'},
+    {x:340,y:370,r:18,id:'B',dest:'safe'},
+    {x:245,y:370,r:18,id:'C',dest:'start'},
   ],
   coins:[{x:205,y:405},{x:335,y:365},{x:485,y:170},{x:715,y:220},{x:975,y:258}],
   goal:{x:975,y:257}, killY:590,
+  invertZones:[{x1:150,x2:300},{x1:700,x2:870}],
 },
 {
   name:'LEVEL 3 — THE GAUNTLET', bg:['#080506','#180a0c'],
@@ -309,6 +432,13 @@ const LVS=[
     {x:677,y:290,w:55, h:18,t:'crumble'},
     {x:800,y:250,w:65, h:18,t:'solid'},
     {x:930,y:210,w:70, h:18,t:'solid'},
+    // invisible platforms
+    {x:215,y:490,w:50,h:14,t:'invis',visTimer:0,hiddenFor:80,shownFor:50,_phase:20},
+    {x:510,y:360,w:50,h:14,t:'invis',visTimer:0,hiddenFor:110,shownFor:60,_phase:70},
+    {x:740,y:265,w:55,h:14,t:'invis',visTimer:0,hiddenFor:95,shownFor:55,_phase:10},
+    // shifting platforms
+    {x:100,y:455,w:60,h:14,t:'shift',dx:2.0,minX:80,maxX:220},
+    {x:850,y:160,w:55,h:14,t:'shift',dx:1.8,minX:810,maxX:930},
   ],
   moving:[
     {x:100,y:455,w:60,h:14,dx:1.2,dy:0,  x0:100,y0:455,minX:90, maxX:185,minY:455,maxY:455},
@@ -317,215 +447,36 @@ const LVS=[
     {x:852,y:145,w:58,h:14,dx:0,  dy:2.0,x0:852,y0:145,minX:852,maxX:852,minY:115,maxY:215},
   ],
   spikes:[
-    {x:100,y:540,w:60,h:14},{x:215,y:500,w:55,h:14},
-    {x:315,y:460,w:50,h:14},{x:410,y:420,w:52,h:14},
-    {x:517,y:370,w:60,h:14},{x:623,y:330,w:54,h:14},
-    {x:732,y:280,w:68,h:14},{x:865,y:240,w:65,h:14},
+    {x:100,y:540,w:60,h:14,inv:false},
+    {x:215,y:500,w:55,h:14,inv:false},
+    {x:315,y:460,w:50,h:14,inv:false},
+    {x:410,y:420,w:52,h:14,inv:false},
+    {x:517,y:370,w:60,h:14,inv:false},
+    {x:623,y:330,w:54,h:14,inv:false},
+    {x:732,y:280,w:68,h:14,inv:false},
+    {x:865,y:240,w:65,h:14,inv:false},
+    // ceiling spikes
+    {x:160,y:478,w:40,h:12,inv:true},
+    {x:460,y:348,w:50,h:12,inv:true},
+    {x:680,y:258,w:45,h:12,inv:true},
+  ],
+  teleporters:[
+    {x:540,y:360,r:18,id:'A',dest:'start'},
+    {x:580,y:360,r:18,id:'B',dest:'safe'},
+    {x:500,y:360,r:18,id:'C',dest:'spike'},
   ],
   coins:[{x:178,y:482},{x:288,y:442},{x:378,y:402},{x:478,y:352},
          {x:598,y:312},{x:698,y:262},{x:818,y:222},{x:948,y:182}],
   goal:{x:960,y:182}, killY:590,
-},
-{
-  name:'LEVEL 4 — ICE INFERNO', bg:['#051015','#0a2030'],
-  spawn:{x:45,y:520},
-  plats:[
-    {x:0,  y:560,w:100,h:18,t:'solid'},
-    {x:140,y:520,w:70, h:18,t:'ice'},
-    {x:280,y:480,w:80, h:18,t:'ice'},
-    {x:420,y:440,w:75, h:18,t:'solid'},
-    {x:550,y:400,w:60, h:18,t:'ice'},
-    {x:680,y:360,w:65, h:18,t:'ice'},
-    {x:800,y:320,w:70, h:18,t:'solid'},
-    {x:920,y:280,w:80, h:18,t:'ice'},
-  ],
-  moving:[
-    {x:200,y:380,w:70,h:14,dx:2.2,dy:0, x0:200,y0:380,minX:150,maxX:320,minY:380,maxY:380},
-    {x:350,y:320,w:65,h:14,dx:0, dy:1.9, x0:350,y0:320,minX:350,maxX:350,minY:260,maxY:380},
-    {x:750,y:200,w:60,h:14,dx:2.0,dy:0, x0:750,y0:200,minX:700,maxX:850,minY:200,maxY:200},
-  ],
-  spikes:[
-    {x:100,y:550,w:40,h:14},{x:220,y:510,w:60,h:14},
-    {x:360,y:470,w:60,h:14},{x:500,y:430,w:50,h:14},
-    {x:630,y:390,w:50,h:14},{x:760,y:350,w:40,h:14},
-    {x:880,y:310,w:40,h:14},{x:990,y:270,w:10,h:14},
-  ],
-  coins:[{x:180,y:495},{x:320,y:455},{x:460,y:415},{x:590,y:375},
-         {x:720,y:335},{x:840,y:295},{x:950,y:255}],
-  goal:{x:960,y:252}, killY:590,
-},
-{
-  name:'LEVEL 5 — CRUMBLE CHAOS', bg:['#0d050a','#1a0f15'],
-  spawn:{x:50,y:520},
-  plats:[
-    {x:0,  y:560,w:100,h:18,t:'solid'},
-    {x:160,y:520,w:70, h:18,t:'crumble'},
-    {x:280,y:480,w:60, h:18,t:'crumble'},
-    {x:390,y:440,w:70, h:18,t:'crumble'},
-    {x:520,y:400,w:65, h:18,t:'crumble'},
-    {x:650,y:360,w:70, h:18,t:'crumble'},
-    {x:780,y:320,w:60, h:18,t:'crumble'},
-    {x:900,y:280,w:70, h:18,t:'crumble'},
-  ],
-  moving:[
-    {x:150,y:360,w:70,h:14,dx:1.8,dy:0, x0:150,y0:360,minX:100,maxX:280,minY:360,maxY:360},
-    {x:400,y:280,w:60,h:14,dx:0, dy:2.3, x0:400,y0:280,minX:400,maxX:400,minY:200,maxY:360},
-    {x:700,y:190,w:70,h:14,dx:2.1,dy:0, x0:700,y0:190,minX:650,maxX:820,minY:190,maxY:190},
-  ],
-  spikes:[
-    {x:110,y:550,w:50,h:14},{x:240,y:510,w:40,h:14},
-    {x:350,y:470,w:40,h:14},{x:470,y:430,w:50,h:14},
-    {x:600,y:390,w:50,h:14},{x:730,y:350,w:50,h:14},
-    {x:860,y:310,w:40,h:14},{x:960,y:270,w:40,h:14},
-  ],
-  coins:[{x:190,y:495},{x:310,y:455},{x:430,y:415},{x:560,y:375},
-         {x:690,y:335},{x:820,y:295},{x:930,y:255}],
-  goal:{x:960,y:252}, killY:590,
-},
-{
-  name:'LEVEL 6 — VOID MAZE', bg:['#05050a','#0a0a15'],
-  spawn:{x:50,y:500},
-  plats:[
-    {x:0,  y:540,w:120,h:18,t:'solid'},
-    {x:170,y:500,w:70, h:18,t:'solid'},
-    {x:300,y:460,w:60, h:18,t:'ice'},
-    {x:430,y:420,w:70, h:18,t:'solid'},
-    {x:570,y:380,w:60, h:18,t:'crumble'},
-    {x:680,y:340,w:70, h:18,t:'ice'},
-    {x:810,y:300,w:60, h:18,t:'solid'},
-    {x:920,y:260,w:70, h:18,t:'crumble'},
-  ],
-  moving:[
-    {x:120,y:380,w:70,h:14,dx:0, dy:2.0, x0:120,y0:380,minX:120,maxX:120,minY:300,maxY:410},
-    {x:350,y:300,w:60,h:14,dx:2.3,dy:0, x0:350,y0:300,minX:300,maxX:460,minY:300,maxY:300},
-    {x:520,y:220,w:70,h:14,dx:0, dy:2.1, x0:520,y0:220,minX:520,maxX:520,minY:150,maxY:300},
-    {x:750,y:160,w:60,h:14,dx:2.2,dy:0, x0:750,y0:160,minX:700,maxX:870,minY:160,maxY:160},
-  ],
-  spikes:[
-    {x:110,y:530,w:60,h:14},{x:240,y:490,w:60,h:14},
-    {x:370,y:450,w:60,h:14},{x:500,y:410,w:60,h:14},
-    {x:630,y:370,w:60,h:14},{x:760,y:330,w:60,h:14},
-    {x:890,y:290,w:60,h:14},{x:970,y:250,w:30,h:14},
-  ],
-  coins:[{x:200,y:475},{x:330,y:435},{x:460,y:395},{x:600,y:355},
-         {x:730,y:315},{x:850,y:275},{x:940,y:235}],
-  goal:{x:960,y:232}, killY:590,
-},
-{
-  name:'LEVEL 7 — SUMMIT ASSAULT', bg:['#0a0510','#150a1a'],
-  spawn:{x:40,y:530},
-  plats:[
-    {x:0,  y:570,w:100,h:18,t:'solid'},
-    {x:140,y:520,w:65, h:18,t:'ice'},
-    {x:270,y:470,w:70, h:18,t:'crumble'},
-    {x:410,y:420,w:60, h:18,t:'solid'},
-    {x:550,y:370,w:70, h:18,t:'ice'},
-    {x:690,y:320,w:60, h:18,t:'crumble'},
-    {x:820,y:270,w:70, h:18,t:'solid'},
-    {x:940,y:220,w:60, h:18,t:'ice'},
-  ],
-  moving:[
-    {x:100,y:420,w:65,h:14,dx:1.9,dy:0, x0:100,y0:420,minX:60,maxX:240,minY:420,maxY:420},
-    {x:350,y:340,w:70,h:14,dx:0, dy:2.2, x0:350,y0:340,minX:350,maxX:350,minY:250,maxY:400},
-    {x:600,y:240,w:60,h:14,dx:2.0,dy:0, x0:600,y0:240,minX:550,maxX:750,minY:240,maxY:240},
-    {x:880,y:140,w:70,h:14,dx:0, dy:2.0, x0:880,y0:140,minX:880,maxX:880,minY:80,maxY:200},
-  ],
-  spikes:[
-    {x:90,y:560,w:50,h:14},{x:210,y:510,w:60,h:14},
-    {x:350,y:460,w:60,h:14},{x:480,y:410,w:60,h:14},
-    {x:620,y:360,w:60,h:14},{x:760,y:310,w:60,h:14},
-    {x:890,y:260,w:60,h:14},{x:980,y:210,w:20,h:14},
-  ],
-  coins:[{x:170,y:495},{x:305,y:445},{x:450,y:395},{x:590,y:345},
-         {x:730,y:295},{x:860,y:245},{x:960,y:195}],
-  goal:{x:970,y:192}, killY:590,
-},
-{
-  name:'LEVEL 8 — SYNCHRONIZE', bg:['#0f050d','#1a0a17'],
-  spawn:{x:50,y:510},
-  plats:[
-    {x:0,  y:550,w:100,h:18,t:'solid'},
-    {x:170,y:500,w:70, h:18,t:'solid'},
-    {x:310,y:450,w:70, h:18,t:'ice'},
-    {x:450,y:400,w:65, h:18,t:'crumble'},
-    {x:600,y:350,w:70, h:18,t:'solid'},
-    {x:750,y:300,w:70, h:18,t:'ice'},
-    {x:900,y:250,w:65, h:18,t:'solid'},
-  ],
-  moving:[
-    {x:120,y:380,w:70,h:14,dx:2.0,dy:0.8, x0:120,y0:380,minX:80,maxX:240,minY:300,maxY:420},
-    {x:350,y:300,w:65,h:14,dx:2.1,dy:0.9, x0:350,y0:300,minX:300,maxX:480,minY:250,maxY:350},
-    {x:680,y:200,w:70,h:14,dx:2.0,dy:0.8, x0:680,y0:200,minX:620,maxX:800,minY:140,maxY:260},
-  ],
-  spikes:[
-    {x:100,y:540,w:60,h:14},{x:240,y:490,w:60,h:14},
-    {x:380,y:440,w:60,h:14},{x:520,y:390,w:60,h:14},
-    {x:660,y:340,w:60,h:14},{x:800,y:290,w:60,h:14},
-    {x:940,y:240,w:60,h:14},
-  ],
-  coins:[{x:200,y:475},{x:340,y:425},{x:490,y:375},{x:630,y:325},
-         {x:780,y:275},{x:930,y:225}],
-  goal:{x:960,y:222}, killY:590,
-},
-{
-  name:'LEVEL 9 — FINAL GAUNTLET', bg:['#0a0508','#15050f'],
-  spawn:{x:45,y:520},
-  plats:[
-    {x:0,  y:560,w:110,h:18,t:'solid'},
-    {x:170,y:510,w:65, h:18,t:'crumble'},
-    {x:300,y:460,w:70, h:18,t:'ice'},
-    {x:450,y:410,w:60, h:18,t:'crumble'},
-    {x:590,y:360,w:70, h:18,t:'ice'},
-    {x:740,y:310,w:65, h:18,t:'crumble'},
-    {x:880,y:260,w:70, h:18,t:'solid'},
-  ],
-  moving:[
-    {x:100,y:400,w:70,h:14,dx:2.1,dy:0.7, x0:100,y0:400,minX:50,maxX:250,minY:320,maxY:450},
-    {x:350,y:310,w:65,h:14,dx:2.2,dy:0.8, x0:350,y0:310,minX:280,maxX:520,minY:200,maxY:380},
-    {x:650,y:180,w:70,h:14,dx:2.0,dy:0.9, x0:650,y0:180,minX:580,maxX:800,minY:100,maxY:260},
-    {x:950,y:100,w:60,h:14,dx:0, dy:2.2, x0:950,y0:100,minX:950,maxX:950,minY:30,maxY:180},
-  ],
-  spikes:[
-    {x:100,y:550,w:60,h:14},{x:235,y:500,w:65,h:14},
-    {x:370,y:450,w:60,h:14},{x:510,y:400,w:60,h:14},
-    {x:650,y:350,w:60,h:14},{x:800,y:300,w:60,h:14},
-    {x:940,y:250,w:60,h:14},{x:980,y:180,w:20,h:14},
-  ],
-  coins:[{x:200,y:485},{x:340,y:435},{x:480,y:385},{x:620,y:335},
-         {x:770,y:285},{x:910,y:235},{x:960,y:160}],
-  goal:{x:970,y:157}, killY:590,
-},
-{
-  name:'LEVEL 10 — ENDLESS VOID', bg:['#050510','#0a0815'],
-  spawn:{x:40,y:530},
-  plats:[
-    {x:0,  y:570,w:120,h:18,t:'solid'},
-    {x:180,y:510,w:70, h:18,t:'ice'},
-    {x:330,y:460,w:60, h:18,t:'crumble'},
-    {x:480,y:410,w:70, h:18,t:'solid'},
-    {x:630,y:360,w:65, h:18,t:'ice'},
-    {x:780,y:310,w:70, h:18,t:'crumble'},
-    {x:920,y:260,w:60, h:18,t:'ice'},
-  ],
-  moving:[
-    {x:100,y:420,w:75,h:14,dx:2.3,dy:0.6, x0:100,y0:420,minX:40,maxX:280,minY:320,maxY:480},
-    {x:380,y:310,w:70,h:14,dx:2.2,dy:0.7, x0:380,y0:310,minX:300,maxX:580,minY:180,maxY:400},
-    {x:700,y:170,w:75,h:14,dx:2.4,dy:0.8, x0:700,y0:170,minX:600,maxX:860,minY:50,maxY:280},
-  ],
-  spikes:[
-    {x:110,y:560,w:60,h:14},{x:260,y:510,w:60,h:14},
-    {x:410,y:460,w:60,h:14},{x:550,y:410,w:60,h:14},
-    {x:700,y:360,w:60,h:14},{x:850,y:310,w:60,h:14},
-    {x:960,y:260,w:40,h:14},{x:980,y:180,w:20,h:14},
-  ],
-  coins:[{x:210,y:485},{x:365,y:435},{x:515,y:385},{x:665,y:335},
-         {x:815,y:285},{x:950,y:235},{x:970,y:150}],
-  goal:{x:970,y:147}, killY:590,
+  invertZones:[{x1:0,x2:160},{x1:560,x2:730},{x1:850,x2:1000}],
 },
 ];
 
 // ── dynamic level state ──
-let crumbles={}, coins=[], mplats=[];
+let crumbles={}, coins=[], mplats=[], shiftPlats=[], invisPlats=[];
+let levelTick=0; // frame counter for invis/shift cycling
+let teleWaiting=false; // is the teleporter choice UI open?
+let safePortalId=null; // which portal is 'safe' this round (randomised each load)
 
 function loadLv(idx){
   lvIdx=idx;
@@ -533,58 +484,86 @@ function loadLv(idx){
   resetP(lv.spawn);
   crumbles={};
   coins=lv.coins.map(()=>false);
-  // deep-copy moving platforms — never mutate original array
   mplats=lv.moving.map(m=>({...m}));
+  // deep copy shift and invis platforms
+  shiftPlats=lv.plats.filter(p=>p.t==='shift').map(p=>({...p}));
+  invisPlats=lv.plats.filter(p=>p.t==='invis').map(p=>({...p, visTimer:p._phase||0}));
   jbuf=0; parts=[];
+  levelTick=0;
+  teleWaiting=false;
+  invertedTimer=0;
+  // randomise which teleporter is safe
+  if(lv.teleporters && lv.teleporters.length>0){
+    const ids=lv.teleporters.map(t=>t.id);
+    safePortalId=ids[0|Math.random()*ids.length];
+  }
   document.getElementById('lvl-badge').textContent=lv.name;
+  updateStatusPills();
 }
 
 // ════════════════════════════════════
-//  PHYSICS
+//  PHYSICS HELPERS
 // ════════════════════════════════════
 function tickMoving(){
   mplats.forEach(m=>{
-    if(m.dx!==0){
-      m.x+=m.dx;
+    if(m.dx!==0){ m.x+=m.dx;
       if(m.x<=m.minX||m.x+m.w>=m.maxX){ m.dx*=-1; m.x=Math.max(m.minX,Math.min(m.x,m.maxX-m.w)); }
     }
-    if(m.dy!==0){
-      m.y+=m.dy;
+    if(m.dy!==0){ m.y+=m.dy;
       if(m.y<=m.minY||m.y+m.h>=m.maxY){ m.dy*=-1; m.y=Math.max(m.minY,Math.min(m.y,m.maxY-m.h)); }
     }
+  });
+  // shift platforms oscillate like moving but horizontally only, slow
+  shiftPlats.forEach(m=>{
+    m.x+=m.dx;
+    if(m.x<=m.minX||m.x+m.w>=m.maxX){ m.dx*=-1; m.x=Math.max(m.minX,Math.min(m.x,m.maxX-m.w)); }
   });
 }
 
 function tickCrumble(){
   for(const k in crumbles){
-    const c=crumbles[k];
-    if(c.dead) continue;
-    c.timer--;
-    if(c.timer<=0){
-      c.dead=true;
-      setTimeout(()=>{ delete crumbles[k]; }, 2500);
-    }
+    const c=crumbles[k]; if(c.dead) continue;
+    c.timer--; if(c.timer<=0){ c.dead=true; setTimeout(()=>{ delete crumbles[k]; }, 2500); }
   }
+}
+
+function tickInvis(){
+  levelTick++;
+  invisPlats.forEach(p=>{
+    p.visTimer++;
+    const cycle=p.hiddenFor+p.shownFor;
+    p._visible=(p.visTimer%cycle) >= p.hiddenFor;
+  });
 }
 
 function livePlats(){
   const lv=LVS[lvIdx];
+  // static solid/ice/crumble
   const st=lv.plats.filter(p=>{
+    if(p.t==='invis'||p.t==='shift') return false; // handled separately
     if(p.t!=='crumble') return true;
-    const k=`${p.x}_${p.y}`;
-    return !crumbles[k]||!crumbles[k].dead;
+    const k=`${p.x}_${p.y}`; return !crumbles[k]||!crumbles[k].dead;
   });
-  return [...st,...mplats];
+  // invisible: only collide when visible
+  const iv=invisPlats.filter(p=>p._visible);
+  return [...st,...mplats,...shiftPlats,...iv];
 }
 
 function tickPlayer(){
   const lv=LVS[lvIdx];
-  if(P.dead) return;
+  if(P.dead||teleWaiting) return;
 
-  const left  = K['a']||K['arrowleft'];
-  const right  = K['d']||K['arrowright'];
-  const down   = K['s']||K['arrowdown'];
-  const jkey   = K['w']||K['arrowup']||K[' '];
+  const inv = invertedTimer>0;
+  if(inv) invertedTimer--;
+
+  const rawLeft  = K['a']||K['arrowleft'];
+  const rawRight = K['d']||K['arrowright'];
+  const down     = K['s']||K['arrowdown'];
+  const jkey     = K['w']||K['arrowup']||K[' '];
+
+  // flip left/right if inverted
+  const left  = inv ? rawRight : rawLeft;
+  const right = inv ? rawLeft  : rawRight;
 
   // horizontal
   let moving=false;
@@ -614,31 +593,54 @@ function tickPlayer(){
   P.vy+=GRAVITY;
   if(P.vy>20) P.vy=20;
 
-  // reset ground before collision pass
   P.onGround=false;
 
-  // separate-axis collision (fixes tunnelling + corner bugs)
   P.x+=P.vx;
   resolveX(livePlats());
   P.y+=P.vy;
   resolveY(livePlats());
 
-  // coyote
   if(P.onGround) P.coyote=COYOTE;
   else if(P.coyote>0) P.coyote--;
 
-  // bounds
   if(P.x<0){P.x=0;P.vx=0;}
   if(P.x+P.w>GW){P.x=GW-P.w;P.vx=0;}
 
   // kill zone
   if(P.y>lv.killY){ killPlayer(); return; }
 
-  // spikes
+  // spikes (floor and ceiling)
   for(const sp of lv.spikes){
     const m=3;
-    if(P.x+m<sp.x+sp.w && P.x+P.w-m>sp.x && P.y+P.h>sp.y+m && P.y+m<sp.y+sp.h){
-      killPlayer(); return;
+    if(sp.inv){
+      // ceiling spike: y is top, spikes point down; collide if player top is near
+      if(P.x+m<sp.x+sp.w && P.x+P.w-m>sp.x && P.y<sp.y+sp.h && P.y+P.h>sp.y-m){
+        killPlayer(); return;
+      }
+    } else {
+      if(P.x+m<sp.x+sp.w && P.x+P.w-m>sp.x && P.y+P.h>sp.y+m && P.y+m<sp.y+sp.h){
+        killPlayer(); return;
+      }
+    }
+  }
+
+  // invert zones
+  if(lv.invertZones){
+    const cx2=P.x+P.w/2;
+    const inZone=lv.invertZones.some(z=>cx2>=z.x1&&cx2<=z.x2);
+    if(inZone && invertedTimer<=0){
+      invertedTimer=INVERT_DURATION;
+      toast('⟲ CONTROLS INVERTED!');
+    }
+  }
+
+  // teleporters
+  if(lv.teleporters && !teleWaiting){
+    for(const tp of lv.teleporters){
+      const dist=Math.hypot(P.x+P.w/2-tp.x, P.y+P.h/2-tp.y);
+      if(dist<tp.r+8){
+        openTeleChooser(); return;
+      }
     }
   }
 
@@ -668,40 +670,80 @@ function tickPlayer(){
   // walk anim
   if(moving&&P.onGround){ P.at++; if(P.at>6){P.af=(P.af+1)%4;P.at=0;} }
   else if(!moving){P.af=0;P.at=0;}
+
+  updateStatusPills();
 }
 
 function resolveX(plats){
   for(const p of plats){
     if(!aabb(P,p)) continue;
-    if(P.vx>0) P.x=p.x-P.w;
-    else if(P.vx<0) P.x=p.x+p.w;
-    P.vx=0;
+    if(P.vx>0) P.x=p.x-P.w; else if(P.vx<0) P.x=p.x+p.w; P.vx=0;
   }
 }
-
 function resolveY(plats){
   for(const p of plats){
     if(!aabb(P,p)) continue;
     if(P.vy>=0){
-      P.y=p.y-P.h; P.vy=0; P.onGround=true;
-      P.dj=true; P.djUsed=false;
-      if(p.t==='crumble'){
-        const k=`${p.x}_${p.y}`;
-        if(!crumbles[k]) crumbles[k]={timer:55,dead:false};
-      }
-    } else {
-      P.y=p.y+p.h; P.vy=0;
-    }
+      P.y=p.y-P.h; P.vy=0; P.onGround=true; P.dj=true; P.djUsed=false;
+      if(p.t==='crumble'){ const k=`${p.x}_${p.y}`; if(!crumbles[k]) crumbles[k]={timer:55,dead:false}; }
+    } else { P.y=p.y+p.h; P.vy=0; }
   }
 }
-
-function aabb(a,b){
-  return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;
-}
-
+function aabb(a,b){ return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y; }
 function isOnIce(){
   const probe={x:P.x,y:P.y+2,w:P.w,h:P.h};
-  return [...LVS[lvIdx].plats,...mplats].some(p=>p.t==='ice'&&aabb(probe,p));
+  return [...LVS[lvIdx].plats,...mplats,...shiftPlats].some(p=>p.t==='ice'&&aabb(probe,p));
+}
+
+// ════════════════════════════════════
+//  TELEPORTER LOGIC
+// ════════════════════════════════════
+function openTeleChooser(){
+  if(teleWaiting) return;
+  teleWaiting=true;
+  gstate='transition'; // pause physics via flag
+  const lv=LVS[lvIdx];
+  const choices=document.getElementById('tele-choices');
+  choices.innerHTML='';
+  // shuffle portal order for display
+  const tps=[...lv.teleporters].sort(()=>Math.random()-.5);
+  tps.forEach(tp=>{
+    const isSafe=(tp.id===safePortalId);
+    const btn=document.createElement('button');
+    btn.className='tele-btn';
+    btn.innerHTML=`<div class="tele-icon">⬡</div><div>PORTAL ${tp.id}</div>`;
+    btn.onclick=()=>{
+      closeTeleChooser();
+      if(isSafe){
+        // teleport to safe zone (after the portal cluster)
+        const safeX=lv.goal.x-150;
+        const safeY=lv.goal.y-60;
+        P.x=safeX; P.y=safeY; P.vx=0; P.vy=0;
+        toast('✓ SAFE PORTAL! Nice guess!');
+        mkParticles(P.x+P.w/2,P.y+P.h/2,20,['#b57bee','#43e8d8','#fff'],4);
+      } else if(tp.dest==='spike'){
+        // teleport into spikes = instant death
+        toast('✗ WRONG PORTAL — spikes!');
+        setTimeout(()=>killPlayer(),200);
+      } else {
+        // teleport back to start
+        resetP(lv.spawn);
+        toast('✗ WRONG PORTAL — back to start!');
+        mkParticles(P.x+P.w/2,P.y+P.h/2,12,['#ff3860','#ff6584'],3);
+      }
+      // re-randomise for next encounter
+      const ids=lv.teleporters.map(t=>t.id);
+      safePortalId=ids[0|Math.random()*ids.length];
+    };
+    choices.appendChild(btn);
+  });
+  document.getElementById('tele-overlay').classList.add('show');
+  gstate='playing';
+}
+
+function closeTeleChooser(){
+  teleWaiting=false;
+  document.getElementById('tele-overlay').classList.remove('show');
 }
 
 // ════════════════════════════════════
@@ -717,8 +759,7 @@ function mkParticles(x,y,n,cols,spd){
 }
 function tickParts(){
   for(let i=parts.length-1;i>=0;i--){
-    const p=parts[i];
-    p.x+=p.vx; p.y+=p.vy; p.vy+=0.1; p.vx*=0.94; p.l-=p.dec;
+    const p=parts[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.1; p.vx*=0.94; p.l-=p.dec;
     if(p.l<=0) parts.splice(i,1);
   }
 }
@@ -733,7 +774,7 @@ function killPlayer(){
   deaths++; shake=20;
   mkParticles(P.x+P.w/2,P.y+P.h/2,32,['#ff3860','#ff6584','#ffd166','#fff'],5);
   hudRefresh(); rageRefresh();
-  const msgs=['NOPE!','OUCH!','NOT QUITE!','SO CLOSE!','OOPS!','WOW... NO.'];
+  const msgs=['NOPE!','OUCH!','NOT QUITE!','SO CLOSE!','OOPS!','WOW... NO.','YIKES!','💀','bhai...'];
   toast(msgs[0|Math.random()*msgs.length]);
   gstate='dying';
   setTimeout(()=>{ showDeath(); killGuard=false; }, 950);
@@ -745,7 +786,11 @@ function showDeath(){
   const el=document.getElementById('death-title');
   el.textContent=titles[ti];
   el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
-  document.getElementById('death-quote').textContent=QUOTES[Math.min(deaths-1,QUOTES.length-1)];
+  const qi=Math.min(deaths-1,ROAST_QUOTES.length-1);
+  document.getElementById('death-quote').textContent=ROAST_QUOTES[qi];
+  // random meme
+  const meme=MEMES[0|Math.random()*MEMES.length];
+  document.getElementById('meme-box').textContent=meme;
   document.getElementById('ds-d').textContent=deaths;
   document.getElementById('ds-t').textContent=elapsed();
   document.getElementById('ds-l').textContent=lvIdx+1;
@@ -778,7 +823,7 @@ function doWin(){
   document.getElementById('win-quote').textContent=
     deaths<5?'"Impressive. You barely suffered."':
     deaths<20?'"You got there eventually... somehow."':
-    '"Against all odds, you persevered. Barely."';
+    '"Against all odds — aur itne deaths ke baad — you made it."';
   showScreen('win-screen');
 }
 
@@ -795,9 +840,8 @@ function doMenu(){
   document.getElementById('hud').classList.add('hidden');
 }
 
-// button wiring — no inline onclick needed
 document.getElementById('btn-start').onclick   = doStart;
-document.getElementById('btn-ctrl').onclick    = ()=>toast('WASD/Arrows move | Space/W jump | S fast fall | R restart');
+document.getElementById('btn-ctrl').onclick    = ()=>toast('WASD/Arrows move | Space/W jump | S fast-fall | R restart | Choose portals wisely!');
 document.getElementById('btn-respawn').onclick = doRespawn;
 document.getElementById('btn-quit1').onclick   = doMenu;
 document.getElementById('btn-again').onclick   = doStart;
@@ -808,8 +852,7 @@ document.getElementById('btn-quit2').onclick   = doMenu;
 // ════════════════════════════════════
 function hudRefresh(){
   document.getElementById('hud-deaths').textContent=deaths;
-  const row=document.getElementById('lives-row');
-  row.innerHTML='';
+  const row=document.getElementById('lives-row'); row.innerHTML='';
   for(let i=0;i<5;i++){
     const d=document.createElement('div');
     d.className='life-dot'+(i<Math.min(deaths,5)?' lost':'');
@@ -825,6 +868,10 @@ function rageRefresh(){
 function elapsed(){ return ((Date.now()-t0)/1000).toFixed(1)+'s'; }
 function tickHUD(){ if(gstate==='playing') document.getElementById('hud-time').textContent=elapsed(); }
 
+function updateStatusPills(){
+  document.getElementById('pill-inv').classList.toggle('active', invertedTimer>0);
+}
+
 // ════════════════════════════════════
 //  TOAST
 // ════════════════════════════════════
@@ -833,7 +880,7 @@ function toast(msg){
   const el=document.getElementById('toast');
   el.textContent=msg; el.classList.add('show');
   clearTimeout(toastTid);
-  toastTid=setTimeout(()=>el.classList.remove('show'),1400);
+  toastTid=setTimeout(()=>el.classList.remove('show'),1800);
 }
 
 // ════════════════════════════════════
@@ -861,13 +908,33 @@ function drawFrame(){
   const lv=LVS[lvIdx];
   let sx=0,sy=0;
   if(shake>0){ sx=(Math.random()-.5)*shake; sy=(Math.random()-.5)*shake; shake=Math.max(0,shake-1.2); }
-
   ctx.save(); ctx.translate(sx,sy);
 
   // background
   const g=ctx.createLinearGradient(0,0,0,canvas.height);
   g.addColorStop(0,lv.bg[0]); g.addColorStop(1,lv.bg[1]);
   ctx.fillStyle=g; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // invert zone tint
+  if(lv.invertZones){
+    lv.invertZones.forEach(z=>{
+      const ix=gx(z.x1), iw=gx(z.x2)-gx(z.x1);
+      ctx.save();
+      ctx.fillStyle=`rgba(255,101,132,${invertedTimer>0?0.07:0.03})`;
+      ctx.fillRect(ix,gy(0),iw,gy(GH)-gy(0));
+      ctx.strokeStyle=`rgba(255,101,132,0.15)`;
+      ctx.lineWidth=1;
+      ctx.setLineDash([4,6]);
+      ctx.strokeRect(ix,gy(0),iw,gy(GH)-gy(0));
+      ctx.setLineDash([]);
+      // label
+      ctx.fillStyle='rgba(255,101,132,0.3)';
+      ctx.font=`bold ${Math.max(8,gs(8))}px 'DM Mono',monospace`;
+      ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.fillText('⟲ INVERT ZONE',gx((z.x1+z.x2)/2),gy(5));
+      ctx.restore();
+    });
+  }
 
   // grid
   ctx.strokeStyle='rgba(108,99,255,0.035)'; ctx.lineWidth=1;
@@ -877,8 +944,15 @@ function drawFrame(){
   // moving platforms
   mplats.forEach(m=>drawPlat(m,null,true));
 
+  // shift platforms
+  shiftPlats.forEach(m=>drawShiftPlat(m));
+
+  // invis platforms
+  invisPlats.forEach(p=>drawInvisPlat(p));
+
   // static platforms
   lv.plats.forEach(p=>{
+    if(p.t==='invis'||p.t==='shift') return;
     const k=`${p.x}_${p.y}`;
     const cs=crumbles[k];
     if(cs&&cs.dead) return;
@@ -886,8 +960,11 @@ function drawFrame(){
     ctx.save(); ctx.translate(gs(skx),0); drawPlat(p,cs,false); ctx.restore();
   });
 
-  // spikes
+  // spikes (floor + ceiling)
   lv.spikes.forEach(sp=>drawSpike(sp));
+
+  // teleporters
+  if(lv.teleporters) lv.teleporters.forEach(tp=>drawTeleporter(tp));
 
   // coins
   lv.coins.forEach((c,i)=>{ if(!coins[i]) drawCoin(c.x,c.y); });
@@ -908,7 +985,7 @@ function drawFrame(){
     if(t.l<=0) return;
     ctx.save(); ctx.globalAlpha=Math.max(0,t.l*.28);
     ctx.beginPath(); ctx.arc(gx(t.x),gy(t.y),gs(7*t.l),0,Math.PI*2);
-    ctx.fillStyle='#6c63ff'; ctx.fill(); ctx.restore();
+    ctx.fillStyle=invertedTimer>0?'#ff6584':'#6c63ff'; ctx.fill(); ctx.restore();
   });
 
   // player
@@ -917,14 +994,13 @@ function drawFrame(){
   ctx.restore();
 }
 
+// ── draw helpers ──
 function drawPlat(p,cs,isMoving){
   const x=gx(p.x),y=gy(p.y),w=gs(p.w),h=gs(p.h);
-  const mov = isMoving || p.minX!==undefined || p.minY!==undefined;
-
+  const mov=isMoving||p.minX!==undefined||p.minY!==undefined;
   ctx.save();
   ctx.shadowBlur=10;
   ctx.shadowColor=p.t==='ice'?'#43e8d8':p.t==='crumble'?'#ff6584':mov?'#ffd166':'#6c63ff';
-
   if(p.t==='ice'){
     const g=ctx.createLinearGradient(x,y,x,y+h);
     g.addColorStop(0,'#1e4a5a'); g.addColorStop(1,'#0d2a33'); ctx.fillStyle=g;
@@ -939,26 +1015,63 @@ function drawPlat(p,cs,isMoving){
     g.addColorStop(0,'#1a1a2e'); g.addColorStop(1,'#12121e'); ctx.fillStyle=g;
   }
   ctx.fillRect(x,y,w,h); ctx.shadowBlur=0;
-
-  // top glow line
   ctx.strokeStyle=p.t==='ice'?'#43e8d8':p.t==='crumble'?'#ff6584':mov?'#ffd166':'#6c63ff';
   ctx.lineWidth=gs(2.5);
   ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+w,y); ctx.stroke();
-
-  // labels
   if(p.t==='ice'){
     ctx.fillStyle='rgba(67,232,216,0.12)'; ctx.fillRect(x,y,w,h);
-    ctx.fillStyle='#43e8d8';
-    ctx.font=`500 ${Math.max(8,gs(7))}px 'DM Mono',monospace`;
+    ctx.fillStyle='#43e8d8'; ctx.font=`500 ${Math.max(8,gs(7))}px 'DM Mono',monospace`;
     ctx.textBaseline='bottom'; ctx.fillText('ICE',x+gs(3),y+h-gs(2));
   }
   if(p.t==='crumble'){
     ctx.fillStyle='rgba(255,101,132,0.1)'; ctx.fillRect(x,y,w,h);
-    ctx.fillStyle='#ff6584';
-    ctx.font=`500 ${Math.max(8,gs(7))}px 'DM Mono',monospace`;
+    ctx.fillStyle='#ff6584'; ctx.font=`500 ${Math.max(8,gs(7))}px 'DM Mono',monospace`;
     ctx.textBaseline='bottom'; ctx.fillText('!!',x+gs(3),y+h-gs(2));
   }
   if(mov){ ctx.fillStyle='rgba(255,209,102,0.12)'; ctx.fillRect(x,y,w,h); }
+  ctx.restore();
+}
+
+function drawShiftPlat(p){
+  const x=gx(p.x),y=gy(p.y),w=gs(p.w),h=gs(p.h);
+  ctx.save();
+  ctx.shadowBlur=12; ctx.shadowColor='#ff9f43';
+  const g=ctx.createLinearGradient(x,y,x,y+h);
+  g.addColorStop(0,'#3a1f00'); g.addColorStop(1,'#1a0e00'); ctx.fillStyle=g;
+  ctx.fillRect(x,y,w,h); ctx.shadowBlur=0;
+  ctx.strokeStyle='#ff9f43'; ctx.lineWidth=gs(2.5);
+  ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+w,y); ctx.stroke();
+  // arrows to indicate shifting
+  ctx.fillStyle='rgba(255,159,67,0.5)';
+  ctx.font=`bold ${Math.max(8,gs(8))}px sans-serif`;
+  ctx.textBaseline='middle'; ctx.textAlign='center';
+  ctx.fillText('⇔',x+w/2,y+h/2);
+  ctx.restore();
+}
+
+function drawInvisPlat(p){
+  const x=gx(p.x),y=gy(p.y),w=gs(p.w),h=gs(p.h);
+  const cycle=p.hiddenFor+p.shownFor;
+  const phase=p.visTimer%cycle;
+  const shown=phase>=p.hiddenFor;
+  // flicker near transition
+  const flickerIn=phase>=p.hiddenFor&&phase<p.hiddenFor+15;
+  const flickerOut=phase>=p.hiddenFor+p.shownFor-15&&phase<p.hiddenFor+p.shownFor;
+  if(!shown && !flickerIn) return;
+  const alpha=shown?(flickerOut?Math.random()*0.4+0.3:0.85):(flickerIn?Math.random()*0.3:0);
+  ctx.save(); ctx.globalAlpha=alpha;
+  ctx.shadowBlur=8; ctx.shadowColor='#43e8d8';
+  const g=ctx.createLinearGradient(x,y,x,y+h);
+  g.addColorStop(0,'#0d2a33'); g.addColorStop(1,'#061518'); ctx.fillStyle=g;
+  ctx.fillRect(x,y,w,h); ctx.shadowBlur=0;
+  ctx.strokeStyle='#43e8d8'; ctx.lineWidth=gs(2);
+  ctx.setLineDash([gs(4),gs(3)]);
+  ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+w,y); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(67,232,216,0.4)';
+  ctx.font=`500 ${Math.max(7,gs(6))}px 'DM Mono',monospace`;
+  ctx.textBaseline='bottom'; ctx.textAlign='left';
+  ctx.fillText('??',x+gs(2),y+h-gs(1));
   ctx.restore();
 }
 
@@ -966,58 +1079,97 @@ function drawSpike(sp){
   const x=gx(sp.x),y=gy(sp.y),w=gs(sp.w),h=gs(sp.h);
   const n=Math.max(1,0|sp.w/10), sw=w/n;
   ctx.save(); ctx.shadowBlur=8; ctx.shadowColor='#ff3860'; ctx.fillStyle='#ff3860';
-  for(let i=0;i<n;i++){
-    ctx.beginPath();
-    ctx.moveTo(x+i*sw,y+h); ctx.lineTo(x+i*sw+sw/2,y); ctx.lineTo(x+i*sw+sw,y+h);
-    ctx.closePath(); ctx.fill();
+  if(sp.inv){
+    // ceiling spike: tip points downward, base at top
+    for(let i=0;i<n;i++){
+      ctx.beginPath();
+      ctx.moveTo(x+i*sw,y);          // top-left of base
+      ctx.lineTo(x+i*sw+sw/2,y+h);   // tip (bottom)
+      ctx.lineTo(x+i*sw+sw,y);        // top-right of base
+      ctx.closePath(); ctx.fill();
+    }
+    // draw a thin base line at ceiling
+    ctx.strokeStyle='#ff3860'; ctx.lineWidth=gs(2);
+    ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+w,y); ctx.stroke();
+  } else {
+    for(let i=0;i<n;i++){
+      ctx.beginPath();
+      ctx.moveTo(x+i*sw,y+h); ctx.lineTo(x+i*sw+sw/2,y); ctx.lineTo(x+i*sw+sw,y+h);
+      ctx.closePath(); ctx.fill();
+    }
   }
+  ctx.restore();
+}
+
+function drawTeleporter(tp){
+  const t=Date.now()/600;
+  const bx=gx(tp.x), by=gy(tp.y), r=gs(tp.r);
+  const pulse=Math.sin(t+tp.x)*0.3+0.7;
+  ctx.save();
+  ctx.shadowBlur=20*pulse; ctx.shadowColor='#b57bee';
+  // outer ring
+  ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI*2);
+  ctx.strokeStyle=`rgba(181,123,238,${pulse})`; ctx.lineWidth=gs(2.5); ctx.stroke();
+  // inner glow
+  const g=ctx.createRadialGradient(bx,by,0,bx,by,r);
+  g.addColorStop(0,`rgba(181,123,238,${0.35*pulse})`);
+  g.addColorStop(1,'rgba(181,123,238,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI*2); ctx.fill();
+  // spinning hex outline
+  ctx.save(); ctx.translate(bx,by); ctx.rotate(t*0.8);
+  ctx.beginPath();
+  for(let i=0;i<6;i++){
+    const a=i*Math.PI/3; const rx=Math.cos(a)*(r*0.7), ry=Math.sin(a)*(r*0.7);
+    i===0?ctx.moveTo(rx,ry):ctx.lineTo(rx,ry);
+  }
+  ctx.closePath(); ctx.strokeStyle=`rgba(181,123,238,0.45)`; ctx.lineWidth=gs(1); ctx.stroke();
+  ctx.restore();
+  // label
+  ctx.fillStyle='#b57bee';
+  ctx.font=`bold ${Math.max(8,gs(9))}px 'Syne',sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(tp.id,bx,by);
+  ctx.shadowBlur=0;
   ctx.restore();
 }
 
 function drawCoin(cx,cy){
   const t=Date.now()/400;
   const bx=gx(cx), by=gy(cy)+Math.sin(t)*gs(3), r=gs(8);
-  ctx.save();
-  ctx.shadowBlur=12; ctx.shadowColor='#ffd166';
+  ctx.save(); ctx.shadowBlur=12; ctx.shadowColor='#ffd166';
   const g=ctx.createRadialGradient(bx-r*.3,by-r*.3,0,bx,by,r);
   g.addColorStop(0,'#ffe599'); g.addColorStop(1,'#cc9900');
   ctx.fillStyle=g; ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI*2); ctx.fill();
   ctx.strokeStyle='#ffd166'; ctx.lineWidth=gs(1.5); ctx.stroke();
-  ctx.fillStyle='#fff9';
-  ctx.font=`bold ${Math.max(7,gs(8))}px sans-serif`;
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('$',bx,by);
+  ctx.fillStyle='#fff9'; ctx.font=`bold ${Math.max(7,gs(8))}px sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('$',bx,by);
   ctx.restore();
 }
 
 function drawGoal(gox,goy){
   const t=Date.now()/700, bx=gx(gox), by=gy(goy);
   const r=gs(15)+Math.sin(t)*gs(3);
-  ctx.save();
-  ctx.shadowBlur=28; ctx.shadowColor='#43e8d8';
+  ctx.save(); ctx.shadowBlur=28; ctx.shadowColor='#43e8d8';
   ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI*2);
   ctx.strokeStyle='#43e8d8'; ctx.lineWidth=gs(2.5); ctx.stroke();
-  ctx.globalAlpha=0.2+0.12*Math.sin(t);
-  ctx.fillStyle='#43e8d8'; ctx.fill(); ctx.globalAlpha=1; ctx.shadowBlur=0;
-  ctx.fillStyle='#43e8d8';
+  ctx.globalAlpha=0.2+0.12*Math.sin(t); ctx.fillStyle='#43e8d8'; ctx.fill();
+  ctx.globalAlpha=1; ctx.shadowBlur=0; ctx.fillStyle='#43e8d8';
   ctx.font=`bold ${Math.max(8,gs(9))}px 'Syne',sans-serif`;
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('EXIT',bx,by);
+  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('EXIT',bx,by);
   ctx.restore();
 }
 
 function drawPlayer(){
   const px=gx(P.x),py=gy(P.y),pw=gs(P.w),ph=gs(P.h);
   const cx=px+pw/2, cy=py+ph/2;
+  const invPulse=invertedTimer>0?Math.sin(Date.now()/120)*0.5+0.5:0;
   ctx.save();
-  ctx.shadowBlur=14; ctx.shadowColor='#6c63ff';
-  ctx.fillStyle=P.onGround?'#8880ff':'#6c63ff';
-  rrect(px,py,pw,ph,gs(4)); ctx.fill();
-  ctx.shadowBlur=0;
+  ctx.shadowBlur=14;
+  ctx.shadowColor=invertedTimer>0?`rgba(255,${0|invPulse*100},132,1)`:'#6c63ff';
+  ctx.fillStyle=P.onGround?(invertedTimer>0?'#ff8850':'#8880ff'):(invertedTimer>0?'#ff6584':'#6c63ff');
+  rrect(px,py,pw,ph,gs(4)); ctx.fill(); ctx.shadowBlur=0;
   ctx.fillStyle='rgba(255,255,255,0.18)';
   rrect(px+gs(2),py+gs(2),pw-gs(4),ph*.38,gs(3)); ctx.fill();
-
-  // eyes
   const ed=P.facing;
   const ex1=cx+ed*gs(3.5), ex2=cx+ed*gs(7.5), ey=cy-gs(4);
   ctx.fillStyle='#fff';
@@ -1026,8 +1178,18 @@ function drawPlayer(){
   ctx.fillStyle='#111';
   ctx.beginPath(); ctx.arc(ex1+ed*gs(1),  ey,gs(1.5),0,Math.PI*2); ctx.fill();
   ctx.beginPath(); ctx.arc(ex2+ed*gs(.8), ey,gs(1.1),0,Math.PI*2); ctx.fill();
-
-  // legs
+  // dizzy spiral eyes when inverted
+  if(invertedTimer>0){
+    ctx.strokeStyle='#ff6584'; ctx.lineWidth=gs(0.8);
+    [[ex1,ey],[ex2,ey]].forEach(([ex,ey2])=>{
+      ctx.beginPath();
+      for(let a=0;a<Math.PI*3;a+=0.3){
+        const sr=a*gs(0.5), sx2=ex+Math.cos(a+Date.now()/200)*sr, sy2=ey2+Math.sin(a+Date.now()/200)*sr;
+        a===0?ctx.moveTo(sx2,sy2):ctx.lineTo(sx2,sy2);
+      }
+      ctx.stroke();
+    });
+  }
   ctx.fillStyle='#4a45cc';
   if(!P.onGround){
     ctx.fillRect(px+gs(2),    py+ph-gs(8), gs(8),gs(9));
@@ -1037,8 +1199,6 @@ function drawPlayer(){
     ctx.fillRect(px+gs(2),    py+ph-gs(7)+lo, gs(8),gs(8));
     ctx.fillRect(px+pw-gs(10),py+ph-gs(7)-lo, gs(8),gs(8));
   }
-
-  // double-jump ring
   if(P.djUsed){
     ctx.save(); ctx.globalAlpha=0.45; ctx.strokeStyle='#ff6584';
     ctx.lineWidth=gs(1.5); ctx.beginPath(); ctx.arc(cx,cy,gs(19),0,Math.PI*2); ctx.stroke(); ctx.restore();
@@ -1062,7 +1222,7 @@ function rrect(x,y,w,h,r){
 (function loop(){
   requestAnimationFrame(loop);
   if(gstate==='playing'){
-    tickMoving(); tickCrumble(); tickPlayer(); tickParts(); tickHUD(); drawFrame();
+    tickMoving(); tickCrumble(); tickInvis(); tickPlayer(); tickParts(); tickHUD(); drawFrame();
   } else if(gstate==='dying'||gstate==='transition'){
     tickParts(); if(shake>0) shake=Math.max(0,shake-1.2); drawFrame();
   }
